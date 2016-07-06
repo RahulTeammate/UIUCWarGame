@@ -1,33 +1,35 @@
 /**
  * @file minimax.h
- * @author Rahul Kumar
+ * @author Rahul Kumar and Roger Xiao
  */
- 
 #ifndef MINIMAX_H
 #define MINIMAX_H
 
 #include <vector>
-using namespace std;
 #include "board.h"
 
+using namespace std;
+
  /**
- * This class is used for Minimax Strategy.
- * @see minimax.cpp for function comments.
+ * This class is used by AI Players to smartly
+ * choose a piece to take in a War Game.
+ * It achieves that by using Minimax Strategy
+ * with Alpha-Beta Pruning.
+ * 
+ * Note: Alpha-Beta Pruning can be disabled.
  */
 class Minimax
 {
 	public:
 		static const int DEPTH_OF_MINIMAX = 3;
 		static const int DEPTH_OF_AB = 5;
-		
 		static const char MAX = 'B';
 		static const char MIN = 'G';
-		
 		static const int INFINITY = 1000000;
 		
 		/**
 		 * This class is a node of a minimax tree
-		 * @see minimax.cpp for function comments
+		 * @see minimax.cpp for function definitions.
 		 */
 		class Node
 		{

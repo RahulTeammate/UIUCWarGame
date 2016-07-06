@@ -1,17 +1,17 @@
 /**
  * @file minimax.cpp
- * @author Rahul Kumar
+ * @author Rahul Kumar and Roger Xiao
  */
+#include "minimax.h"
 #include <algorithm>
 #include <iostream>
-#include "stdlib.h"
-using namespace std;
-#include "minimax.h"
 #include "board.h"
+#include "stdlib.h"
 
+using namespace std;
 
 /**
- * Builds a minimax tree. Uses multiple helper functions
+ * Constructor that builds a minimax tree.
  * 
  * @param currPlayer Char which will be used to judge whether the root will be a min node or a max node.
  * @param currBoard Board to use as the root of the minimax tree
@@ -20,23 +20,27 @@ using namespace std;
 Minimax::Minimax(char currPlayer, const Board * currBoard, bool enableAlphaBeta)
 {
 	this->numNodesExpanded = 0;
-	
+	//if alpha-beta pruning is enabled.
 	if (enableAlphaBeta)
 	{
+		//use a helper function to build a minimax tree with alpha-beta pruning.
 		alphaBetaBuild(currPlayer, currBoard);
 	}
-	else
+	else //if alpha-beta pruning is disabled.
 	{
+		//set up the head node of the minimax tree.
 		Board * headBoard = new Board(currBoard);
 		this->head = new Node(headBoard, 0, 0);
+		//account for this node's creation.
 		numNodesExpanded++;
+		//go to a helper function to build the rest of it.
 		minimaxBuild(this->head, currPlayer, 0);
 	}
 }
 
 /**
- * Destroys all heap memory allocated for a Minimax instance
- * Calls a recursive helper function
+ * Destroys all heap memory allocated for a Minimax instance.
+ * Calls a recursive helper function.
  */
 Minimax::~Minimax()
 {
@@ -48,24 +52,20 @@ Minimax::~Minimax()
  * memory associated with it.
  * 
  * @param node The Node Pointer the traverser currently points to.
+ * @return Nothing
  */
 void Minimax::clear(Node * node)
 {
-	if (node->children.empty())
+	//if this node has children, then recursively
+	//free the children first.
+	while (node->children.empty() == false)
 	{
-		delete node->board;
-		delete node;
+		this->clear(node->children.back());
+		node->children.pop_back();
 	}
-	else
-	{
-		while (node->children.empty() == false)
-		{
-			this->clear(node->children.back());
-			node->children.pop_back();
-		}
-		delete node->board;
-		delete node;
-	}
+	//now free this node and its board member.
+	delete node->board;
+	delete node;
 }
 
 /**
@@ -86,7 +86,8 @@ Minimax::Node::Node(Board * board, int rowMove, int colMove)
 
 
 /**
- * Recursive helper function for constructor that builds a minimax tree to a certain depth
+ * Recursive helper function for the constructor that builds a 
+ * minimax tree to a certain depth.
  * 
  * @param node Node that contains info on Board state.
  * @param currPlayer Current player at a depth within the minimax tree
@@ -96,40 +97,46 @@ Minimax::Node::Node(Board * board, int rowMove, int colMove)
  */
 int Minimax::minimaxBuild(Node * node, char player, int depth)
 {
-	//BASE CASE============================================================================
-	//Utility(node) if node is terminal
+	//BASE CASES================================================================
+	//Utility(node) if node is terminal=========================================
+	//if this node's game state is "Game Over".
 	if (node->board->isGameOver() == true)
 	{
 		int blue = 0; int green = 0;
 		node->board->updateScore(blue, green);
-		
+		//utility function
 		if (blue > green) node->value = 9001;
 		else if (blue == green) node->value = 0;
 		else node->value = -9001;
 		return node->value;
 	}
+	//if this node is at the maximum depth of the minimax tree.
 	if (depth == DEPTH_OF_MINIMAX )
 	{
 		int blue = 0; int green = 0;
 		node->board->updateScore(blue, green);
-		
+		//utility function
 		node->value = blue - green;
 		return node->value;
 	}
-	//RECURSIVE CASE===============================================================
-	//
+	//RECURSIVE CASE============================================================
+	//max_action Minimax(Succ(node, action)) if player = MAX====================
+	//min_action Minimax(Succ(node, action)) if player = MIN====================
+	//let player take a piece on all possible spots on the Board. 
 	for (int i = 0; i < 6; i++)
 	{
 		for (int j = 0; j < 6; j++)
 		{
 			Board * childBoard = new Board(node->board);
 			
+			//For all legal moves, make the new Board States into this node's children.
 			int moveProp = childBoard->putPiece(i, j, player);
 			if (moveProp != 0)
 			{
 				Node * child = new Node(childBoard,i,j);
-				this->numNodesExpanded++;
 				node->children.push_back(child);
+				//account for this node's creation.
+				this->numNodesExpanded++;
 			}
 			else
 			{
@@ -137,17 +144,16 @@ int Minimax::minimaxBuild(Node * node, char player, int depth)
 			}
 		}
 	}
-	
+	//set up minimax variables and update the next player.
 	int maxVal = -1*INFINITY;
 	int minVal = INFINITY;
 	char nextPlayer = (player == MAX) ? MIN : MAX;
 	
+	//iterate through all of this node's children and find the maximum 
+	//or minimum value (depending if player is MAX or MIN, respectively)
 	for (unsigned int i = 0; i < node->children.size(); i++)
 	{
 		Node * child = node->children.at(i);
-		
-		//max_action Minimax(Succ(node, action)) if player = MAX 
-		//min_action Minimax(Succ(node, action)) if player = MIN 
 		if (player == MAX)
 			maxVal = max(maxVal, minimaxBuild(child, nextPlayer, depth + 1));
 		else
@@ -155,7 +161,6 @@ int Minimax::minimaxBuild(Node * node, char player, int depth)
 	}
 	if (player == MAX) node->value = maxVal;
 	else node->value = minVal;
-	
 	return node->value;
 }
 
@@ -168,26 +173,22 @@ int Minimax::minimaxBuild(Node * node, char player, int depth)
  */
 void Minimax::alphaBetaBuild(char currPlayer, const Board * currBoard)
 {
-	//Function action = Alpha-Beta-Search(node)
-	//v = Max-Value(node, −infinity, infinity) 
-	//
-	//AND
-	//
-	//Function action = Alpha-Beta-Search(node)
-	//v = Min-Value(node, −infinity, infinity)
-
+	//Function action = Alpha-Beta-Search(node)=================================
+	//v = Max-Value(node, −infinity, infinity)==================================
+	//AND=======================================================================
+	//Function action = Alpha-Beta-Search(node)=================================
+	//v = Min-Value(node, −infinity, infinity)==================================
+	//set up the head node of the minimax tree (with alpha-beta pruning).
 	Board * headBoard = new Board(currBoard);
+	//account for this node's creation.
 	numNodesExpanded++;
 	this->head = new Node(headBoard, 0, 0);
 	
+	//start building the rest of the minimax tree (with alpha-beta pruning).
 	if (currPlayer == MAX)
-	{
 		abMax(this->head, currPlayer, -1*INFINITY, INFINITY, 0);
-	}
 	else
-	{
 		abMin(this->head, currPlayer, -1*INFINITY, INFINITY, 0);
-	}
 }
 
 /**
@@ -204,28 +205,32 @@ void Minimax::alphaBetaBuild(char currPlayer, const Board * currBoard)
  */
 int Minimax::abMax(Node * node, char player, int alpha, int beta, int depth)
 {
-	//BASE CASE============================================================================
-	//if Terminal(node) return Utility(node)
+	//BASE CASE=================================================================
+	//if Terminal(node) return Utility(node)====================================
+	//if this node's game state is "Game Over".
 	if (node->board->isGameOver() == true)
 	{
 		int blue = 0; int green = 0;
 		node->board->updateScore(blue, green);
-		
+		//utility function.
 		if (blue > green) node->value = 9001;
 		else if (blue == green) node->value = 0;
 		else node->value = -9001;
 		return node->value;
 	}
+	//if this node is at the maximum depth of the minimax tree.
 	if (depth == DEPTH_OF_MINIMAX )
 	{
 		int blue = 0; int green = 0;
 		node->board->updateScore(blue, green);
-		
+		//utility function.
 		node->value = blue - green;
 		return node->value;
 	}
 	
-	//RECURSIVE CASE=======================================================================
+	//RECURSIVE CASE============================================================
+	//The comments in the recursive case are based on pseudocode for============
+	//Minimax with Alpha-Beta Pruning.==========================================
 	//v = −infinity
 	int v = -1*INFINITY;
 	char nextPlayer = (player == MAX) ? MIN : MAX;
@@ -248,9 +253,12 @@ int Minimax::abMax(Node * node, char player, int alpha, int beta, int depth)
 				v = max(v, abMin(child, nextPlayer, alpha, beta, depth+1));
 				
 				//Best Move pushed forward, worst move pushed backward
-				if (moveProp == 2 && node->children.empty() == false) node->children.insert(node->children.begin(), child);
-				else if (moveProp == 2 && node->children.empty() == true) node->children.push_back(child);
-				else node->children.push_back(child);
+				if (moveProp == 2 && node->children.empty() == false) 
+					node->children.insert(node->children.begin(), child);
+				else if (moveProp == 2 && node->children.empty() == true) 
+					node->children.push_back(child);
+				else 
+					node->children.push_back(child);
 				
 				//if v >= beta return v
 				if (v >= beta)
@@ -287,28 +295,32 @@ int Minimax::abMax(Node * node, char player, int alpha, int beta, int depth)
  */
 int Minimax::abMin(Node * node, char player, int alpha, int beta, int depth)
 {
-	//BASE CASE============================================================================
-	//if Terminal(node) return Utility(node)
+	//BASE CASE=================================================================
+	//if Terminal(node) return Utility(node)====================================
+	//if this node's game state is "Game Over".
 	if (node->board->isGameOver() == true)
 	{
 		int blue = 0; int green = 0;
 		node->board->updateScore(blue, green);
-		
+		//utility function
 		if (blue > green) node->value = 9001;
 		else if (blue == green) node->value = 0;
 		else node->value = -9001;
 		return node->value;
 	}
+	//if this node is at the maximum depth of the minimax tree.
 	if (depth == DEPTH_OF_MINIMAX )
 	{
 		int blue = 0; int green = 0;
 		node->board->updateScore(blue, green);
-		
+		//utility function
 		node->value = blue - green;
 		return node->value;
 	}
 	
-	//RECURSIVE CASE=======================================================================
+	//RECURSIVE CASE============================================================
+	//The comments in the recursive case are based on pseudocode for============
+	//Minimax with Alpha-Beta Pruning.==========================================
 	//v = infinity
 	int v = INFINITY;
 	char nextPlayer = (player == MAX) ? MIN : MAX;
@@ -330,9 +342,12 @@ int Minimax::abMin(Node * node, char player, int alpha, int beta, int depth)
 				v = min(v, abMax(child, nextPlayer, alpha, beta, depth+1));
 				
 				//Best Move pushed forward, worst move pushed backward
-				if (moveProp == 2 && node->children.empty() == false) node->children.insert(node->children.begin(), child);
-				else if (moveProp == 2 && node->children.empty() == true) node->children.push_back(child);
-				else node->children.push_back(child);
+				if (moveProp == 2 && node->children.empty() == false) 
+					node->children.insert(node->children.begin(), child);
+				else if (moveProp == 2 && node->children.empty() == true) 
+					node->children.push_back(child);
+				else 
+					node->children.push_back(child);
 				
 				//if v <= alpha return v
 				if (v <= alpha)
@@ -364,23 +379,23 @@ int Minimax::abMin(Node * node, char player, int alpha, int beta, int depth)
  */
 void Minimax::chooseNextMove(int & row, int & col)
 {
+	//go through all of the children of the Minimax Tree head.
 	vector<unsigned int> listOfBestMoveIndices;
 	for (unsigned int i = 0; i < head->children.size(); i++)
 	{
 		Node * child = head->children.at(i);
-		
+		//find the children whose values are equal to the head's value.
 		if (head->value == child->value)
 		{
 			listOfBestMoveIndices.push_back(i);
 		}
 	}
 	
-	//So listOfBestMoveIndices has all the indices of 
-	//child minimax nodes with the same value as their parent.
-	//So let's randomly choose a move that is supposedly the same as the rest.
+	//if there is more than one 1 child whose values are equal to 
+	//the head's value, randomly pick one of these children.
 	int randIndex = rand() % ((int)listOfBestMoveIndices.size());
-	
 	Node * randChild = head->children.at( listOfBestMoveIndices.at(randIndex) );
+	//choose the move the AI must make based on the chosen child node.
 	row = randChild->rowMove;
 	col = randChild->colMove;
 }

@@ -1,13 +1,15 @@
 /**
  * @file board.h
- * @author Rahul Kumar
+ * @author Rahul Kumar and Roger Xiao
  */
 #ifndef BOARD_H
 #define BOARD_H
 
 /**
- * This class is used as a War Game board
- * @see board.cpp for function comments.
+ * This class is used as a War Game board.
+ * This class can output the current scores of Player Blue and Green,
+ * output the board's current state, have a Player take a piece in 
+ * position (row, column), and finally, detect if the War Game is over.
  */
 class Board 
 {
@@ -21,9 +23,11 @@ class Board
 		
 	private:
 		/**
-		 * BoardPiece is used as a piece of the
-		 * Board class
-		 * @see board.cpp for function comments
+		 * BoardPiece is a "piece" of the Board class.
+		 * A Player that takes a BoardPiece adds that BoardPiece's
+		 * value to their score.
+		 * 
+		 * @see board.cpp for function definitions.
 		 */
 		class BoardPiece 
 		{
@@ -32,7 +36,6 @@ class Board
 				char playerInControl;
 				BoardPiece();
 		};
-		
 		BoardPiece gameBoard[6][6];
 		
 		void paraDrop(int row, int col, char player);
