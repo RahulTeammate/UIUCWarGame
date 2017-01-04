@@ -1,3 +1,6 @@
+**Demonstration:**
+**[Video Link](https://youtu.be/ughgZE257xE)**
+
 **How to load the game:**  
 1. You can only play this game on Linux.  
 2. To run the source code, run "make" in the part2 directory and run "./aimp2".  
@@ -9,4 +12,4 @@
 **Additional Info:**  
 1. To just see the source code, double-click on the .cpp and .h files.  
 2. aimp2.cpp has the main function.  
-3. If you cannot play the game or want a quick demonstration, click on this [link.](https://youtu.be/IoLtzn0I-rE)  
+3. If you cannot play the game or want a quick non-voiced demonstration, click on this [link.](https://youtu.be/IoLtzn0I-rE)  
